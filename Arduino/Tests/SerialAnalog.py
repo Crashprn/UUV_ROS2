@@ -21,7 +21,9 @@ class SerialAnalog:
 def main(args = None):
     portPath = os.path.join('/dev', 'ttyACM0')
     serialObj = SerialAnalog(Serial(portPath))
-
+    
+    time.sleep(4)
+    
     while True:
         pinValues = input("Enter space seperated values from 0 to 255: ")
         inputArray = pinValues.split()
