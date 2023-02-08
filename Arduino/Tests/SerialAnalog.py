@@ -8,12 +8,12 @@ class SerialAnalog:
     
     def __init__(self, ser: Serial):
         self.serial = ser
+        print(ser)
     
     def writeMsg(self, pins):
-        print(pins)
         msg = ''
         for pin in pins:
-            msg += chr(pin)
+            msg += pin
         self.serial.write(msg.encode())
 
 
@@ -29,10 +29,7 @@ def main(args = None):
         inputArray = pinValues.split()
         val_ints = []
         for value in inputArray:
-            val_int = int(value)
-            if val_int > 255 or val_int < 0:
-                print("Not in valid range")
-                continue
+            val_int = value
             val_ints.append(val_int)
         
         serialObj.writeMsg(val_ints)
