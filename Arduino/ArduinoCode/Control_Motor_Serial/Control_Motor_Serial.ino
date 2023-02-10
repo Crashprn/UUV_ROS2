@@ -1,15 +1,20 @@
-const uint8_t numberOfPins = 1;
+const uint8_t numberOfPins = 4;
+// 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
+int pinSets[][3] = {{11, 13, 12}, {10, 9, 8}, {5,7,6}, {3, 4, 2}};
+
 char receivedChars[numberOfPins * 2];
+long int newPinStates[numberOfPins];
 long int pinState[numberOfPins];
-int x_in = A0;
-long int x_pos;
-int deadzone = 2;
+int deadzone = 5;
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(11, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(7, OUTPUT);
+  for (auto &&pins : pinSets)
+  {
+    pinMode(pins[0], OUTPUT);
+    pinMode(pins[1], OUTPUT);
+    pinMode(pins[2], OUTPUT);
+  }
   Serial.begin(115200);
 
   for (auto &pin : pinState)
@@ -23,48 +28,60 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (Serial.available() >= numberOfPins * 2)
   {
-    controlMotor(receiveSerial(numberOfPins * 2));
+    receiveSerial(numberOfPins * 2);
+    for (auto &&num: receivedChars)
+    {
+      Serial.print(num); Serial.print(" , ");
+    }
+    Serial.println();
+    controlMotor(newPinStates);
   }
 
 }
 
-long int receiveSerial(int byteNumber)
+void receiveSerial(int byteNumber)
 {
   auto length = Serial.readBytesUntil('\n', receivedChars, byteNumber);
 
-  int newNum = static_cast<uint8_t>(receivedChars[1]);
-
-  if (receivedChars[0] == '-')
+  for (auto i = 0; i < byteNumber/2; i++)
   {
-    newNum = newNum * -1;
+    int newNum = receivedChars[i*2+1];
+    if (receivedChars[i*2] == '-')
+    {
+      newNum = newNum * -1;
+    }
+    newPinStates[i] = newNum;
   }
-  return newNum;
 }
 
-void controlMotor(long int motorValue)
+void controlMotor(long int* motorValues)
 {
-
-  if (abs(motorValue) < deadzone || (motorValue < 0 && pinState[0] > 0) || (motorValue > 0 && pinState[0] < 0))
+  for (auto i = 0; i < numberOfPins; i++)
   {
-    digitalWrite(8, LOW);
-    digitalWrite(7, LOW);
-    pinState[0] = 0;
-    delay(200);
-  }
-  else 
-  {
-    analogWrite(11, abs(motorValue));
-
-    if (motorValue < 0)
+    auto motorValue = motorValues[i];
+    if (abs(motorValue) < deadzone || (motorValue < 0 && pinState[i] > 0) || (motorValue > 0 && pinState[i] < 0))
     {
-      digitalWrite(7, HIGH);
+      digitalWrite(pinSets[i][1], LOW);
+      digitalWrite(pinSets[i][2], LOW);
+      pinState[i] = 0;
     }
-    else
+    else 
     {
-      digitalWrite(8, HIGH);
+      analogWrite(pinSets[i][0], abs(motorValue));
+
+      if (motorValue < 0)
+      {
+        digitalWrite(pinSets[i][2], HIGH);
+      }
+      else
+      {
+        digitalWrite(pinSets[i][1], HIGH);
+      }
+      pinState[i] = motorValue;
     }
-    pinState[0] = motorValue;
+
+
+    Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
   }
 
-  Serial.print("Got message: "); Serial.print(pinState[0]); Serial.print(" : "); Serial.println(motorValue);
 }
