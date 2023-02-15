@@ -5,16 +5,25 @@ import time
 
 
 class SerialAnalog:
-    
+       
     def __init__(self, ser: Serial):
         self.serial = ser
-        print(ser)
-    
-    def writeMsg(self, pins):
-        msg = ''
-        for pin in pins:
-            msg += pin
-        self.serial.write(msg.encode())
+        self.serial.timeout = .5
+    	
+    def writeMsg(self, nums):
+        msg = []
+        for num in nums:
+            if num >= 0:
+                msg.append(32)
+            else:
+                msg.append(45)
+        
+            msg.append(abs(num))
+        print(msg)
+        self.serial.write(bytes(msg))
+        time.sleep(.05)
+        newMsg = self.serial.read_until(';')
+        print(newMsg.decode())
 
 
 
@@ -29,7 +38,7 @@ def main(args = None):
         inputArray = pinValues.split()
         val_ints = []
         for value in inputArray:
-            val_int = value
+            val_int = int(value)
             val_ints.append(val_int)
         
         serialObj.writeMsg(val_ints)

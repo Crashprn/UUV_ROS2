@@ -1,5 +1,6 @@
 const uint8_t numberOfPins = 4;
 // 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
+// Right, Left, tbd
 int pinSets[][3] = {{11, 13, 12}, {10, 9, 8}, {5,7,6}, {3, 4, 2}};
 
 char receivedChars[numberOfPins * 2];
@@ -21,19 +22,21 @@ void setup() {
   {
     pin = 0;
   }
-  Serial.println("Arduino Ready");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
   if (Serial.available() >= numberOfPins * 2)
   {
     receiveSerial(numberOfPins * 2);
-    for (auto &&num: receivedChars)
+    /*
+    for (char num: receivedChars)
     {
-      Serial.print(num); Serial.print(" , ");
+      Serial.print(static_cast<uint8_t>(num)); Serial.print(" , ");
     }
-    Serial.println();
+    */
+    
     controlMotor(newPinStates);
   }
 
@@ -41,16 +44,15 @@ void loop() {
 
 void receiveSerial(int byteNumber)
 {
-  auto length = Serial.readBytesUntil('\n', receivedChars, byteNumber);
-
+  auto length = Serial.readBytes(receivedChars, byteNumber);
   for (auto i = 0; i < byteNumber/2; i++)
   {
-    int newNum = receivedChars[i*2+1];
+    long int newNum = static_cast<uint8_t>(receivedChars[i*2+1]);
     if (receivedChars[i*2] == '-')
     {
       newNum = newNum * -1;
     }
-    newPinStates[i] = newNum;
+    newPinStates[i] = static_cast<long int>(newNum);
   }
 }
 
@@ -81,7 +83,8 @@ void controlMotor(long int* motorValues)
     }
 
 
-    Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
+    //Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
   }
+  //Serial.print(';');
 
 }

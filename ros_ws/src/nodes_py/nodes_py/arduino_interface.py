@@ -3,42 +3,38 @@ from serial import Serial
 import rclpy
 import time
 from sensor_msgs.msg import Joy
-
+import threading
 from rclpy.node import Node
 
 class SerialAnalog:
        
     def __init__(self, ser: Serial):
         self.serial = ser
-        print(ser)
     
-    def writeMsg(self, num):
+    def writeMsg(self, nums):
         msg = []
-        if num > 0:
-            msg.append(32)
-        else:
-            msg.append(45)
+        for num in nums:
+            if num >= 0:
+                msg.append(32)
+            else:
+                msg.append(45)
         
-        msg.append(abs(num))
+            msg.append(abs(num))
+        
         self.serial.write(bytes(msg))
-
-        
-        read = self.serial.read_until()
-        return read
-
+        #returnMsg = self.serial.read_until(';')
+        #return msg, returnMsg
 
 class ArduinoInterface(Node):
     
-    def __init__(self):
+    def __init__(self, ser):
         super().__init__('arduino_interface_node')
         
-        portPath = os.path.join("/dev", 'ttyACM0')
-        
-        ser = Serial(portPath)
-        ser.baudrate = 115200
-        ser.timeout = 0.1
+
         self.port = SerialAnalog(ser)
         self.get_logger().info(str(ser.read_until('\n', )))
+        self.turbo = False
+        self.motorNums = [0,0,0,0]
         
 
         
@@ -46,22 +42,49 @@ class ArduinoInterface(Node):
     
     
     def sub_callback(self, msg: Joy):
-        motorNum = int(msg.axes[1] * 254)
-        newMsg = self.port.writeMsg(motorNum)
+        # axes: Left_x, Left_y, ....
+        xLeft = msg.axes[0]
+        yLeft = msg.axes[1]
         
-        self.get_logger().info(f'Motor command : {motorNum}, {newMsg.decode()}')
+        if msg.buttons[0] == 1:
+            self.turbo = not self.turbo
+        scalar = 255 if self.turbo else 127
+        
+        
+        leftTurn = abs(xLeft) if xLeft > 0 else 0
+        rightTurn = abs(xLeft) if xLeft < 0 else 0
+        
+        #Right motor
+        rightMotor = int((abs(yLeft)* (1-rightTurn) * scalar))
+        self.motorNums[0] = -1 * rightMotor if yLeft < 0 else rightMotor
+        # Left motor
+        leftMotor = int((abs(yLeft) *(1-leftTurn) *scalar))
+        self.motorNums[1] = -1 * leftMotor if yLeft < 0 else leftMotor
+
+        self.port.writeMsg(self.motorNums)
+        
+        self.get_logger().info(f'Left X: {xLeft}, Left Y: {yLeft}, Motor command : {self.motorNums}')
         
 
 def main(args=None):
     rclpy.init()
     
-    node = ArduinoInterface()
-    time.sleep(2)
-    rate = node.create_rate(400)
+    portPath = os.path.join("/dev", 'ttyACM0')
+        
+    ser = Serial(portPath)
+    ser.baudrate = 115200
+    ser.timeout = 0.1
+    # Reset Arduino
+    ser.setDTR(False)
+    time.sleep(0.022)
+    ser.setDTR(True)
+    
+    time.sleep(3) 
+    node = ArduinoInterface(ser)
+    
     try:
         while rclpy.ok():
             rclpy.spin_once(node)
-            time.sleep(0.005)
     except KeyboardInterrupt:
         pass
     
