@@ -42,24 +42,29 @@ class ArduinoInterface(Node):
     
     
     def sub_callback(self, msg: Joy):
-        # axes: Left_x, Left_y, ....
+        # axes: Left_x, Left_y, Left_trigger, Right_x, Right_y, Right_trigger
         xLeft = msg.axes[0]
         yLeft = msg.axes[1]
+        
+        trigLeft = (1 - msg.axes[2]) / 2
+        trigRight = (1 - msg.axes[5]) / 2
         
         if msg.buttons[0] == 1:
             self.turbo = not self.turbo
         scalar = 255 if self.turbo else 127
         
         
-        leftTurn = abs(xLeft) if xLeft > 0 else 0
-        rightTurn = abs(xLeft) if xLeft < 0 else 0
+        leftScaler = abs(xLeft) if xLeft > 0 else 0
+        rightScaler = abs(xLeft) if xLeft < 0 else 0
+        
+        direction = 1 if yLeft > 0 else -1
         
         #Right motor
-        rightMotor = int((abs(yLeft)* (1-rightTurn) * scalar))
-        self.motorNums[0] = -1 * rightMotor if yLeft < 0 else rightMotor
+        rightMotor = int((yLeft * (1-rightScaler) - trigRight * direction) * scalar)
+        self.motorNums[0] = rightMotor
         # Left motor
-        leftMotor = int((abs(yLeft) *(1-leftTurn) *scalar))
-        self.motorNums[1] = -1 * leftMotor if yLeft < 0 else leftMotor
+        leftMotor = int((yLeft *(1-leftScaler) - trigLeft* direction) *scalar)
+        self.motorNums[1] = leftMotor
 
         self.port.writeMsg(self.motorNums)
         
