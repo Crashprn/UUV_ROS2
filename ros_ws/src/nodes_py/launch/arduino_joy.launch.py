@@ -12,5 +12,8 @@ def generate_launch_description():
             package="joy",
             executable='joy_node',
             name="joy_node",
+            parameters=[
+                {'default_trig_val': True}
+            ]
         )
     ])
