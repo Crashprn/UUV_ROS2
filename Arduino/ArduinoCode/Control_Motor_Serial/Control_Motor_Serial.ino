@@ -1,6 +1,6 @@
 const uint8_t numberOfPins = 4;
 // 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
-// Right, Left, tbd
+// Right, Left, Back, Forward
 int pinSets[][3] = {{11, 13, 12}, {10, 9, 8}, {5,7,6}, {3, 4, 2}};
 
 char receivedChars[numberOfPins * 2];
@@ -36,8 +36,9 @@ void loop() {
       Serial.print(static_cast<uint8_t>(num)); Serial.print(" , ");
     }
     */
-    
     controlMotor(newPinStates);
+
+    //Serial.print(';');
   }
 
 }
@@ -85,6 +86,5 @@ void controlMotor(long int* motorValues)
 
     //Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
   }
-  //Serial.print(';');
 
 }
