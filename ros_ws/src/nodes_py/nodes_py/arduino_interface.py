@@ -33,7 +33,6 @@ class ArduinoInterface(Node):
         
 
         self.port = SerialAnalog(ser)
-        self.get_logger().info(str(ser.read_until('\n', )))
         self.turbo = False
         # Right, Left, Back, Front
         self.motorNums = [0,0,0,0]
@@ -92,7 +91,6 @@ class ArduinoInterface(Node):
         #sent, returned = self.port.writeMsg(self.motorNums)
         self.port.writeMsg(self.motorNums)
         
-        self.get_logger().info(f'Left X: {xLeft}, Left Y: {yLeft}, Right Y: {yRight}, Motor command : {self.motorNums}\n')
         #self.get_logger().info(returned.decode())
         
 
