@@ -1,3 +1,8 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+
 const uint8_t numberOfPins = 4;
 // 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
 // Right, Left, Back, Forward
@@ -7,6 +12,8 @@ char receivedChars[numberOfPins * 2];
 long int newPinStates[numberOfPins];
 long int pinState[numberOfPins];
 int deadzone = 5;
+
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 void setup() {
   // put your setup code here, to run once:
@@ -22,6 +29,10 @@ void setup() {
   {
     pin = 0;
   }
+
+  if (!bno.begin()) Serial.print("0;");
+  else Serial.print("1;");
+  bno.setExtCrystalUse(true);
 }
 
 void loop() {
@@ -35,10 +46,13 @@ void loop() {
     {
       Serial.print(static_cast<uint8_t>(num)); Serial.print(" , ");
     }
-    */
+    */    
+    Serial.println();
     controlMotor(newPinStates);
+    imu::Quaternion quat = bno.getQuat();
+    imu::Vector<3> acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
 
-    //Serial.print(';');
+    sendIMU(quat, acc);
   }
 
 }
@@ -87,4 +101,11 @@ void controlMotor(long int* motorValues)
     //Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
   }
 
+}
+
+void sendIMU(imu::Quaternion& quat, imu::Vector<3>& acc)
+{
+  Serial.print(acc.x(), 4); Serial.print(','); Serial.print(acc.y(), 4); Serial.print(','); Serial.print(acc.z(), 4); Serial.print(',');
+  Serial.print(quat.x(), 4); Serial.print(','); Serial.print(quat.y(), 4); Serial.print(','); Serial.print(quat.z(), 4); Serial.print(','); Serial.print(quat.w(), 4);
+  Serial.print(';');
 }

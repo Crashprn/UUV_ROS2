@@ -3,8 +3,8 @@ from serial import Serial
 import rclpy
 import time
 from sensor_msgs.msg import Joy
-import threading
 from rclpy.node import Node
+from uuv_interfaces.msg import Pose
 
 class SerialAnalog:
        
@@ -22,8 +22,10 @@ class SerialAnalog:
             msg.append(abs(num))
         
         self.serial.write(bytes(msg))
-        #returnMsg = self.serial.read_until(';')
-        #return msg, returnMsg
+        
+    def readMsg(self):
+        msg = self.serial.read_until(";")
+        return msg.decode().strip(";")
 
 
 class ArduinoInterface(Node):
@@ -31,15 +33,20 @@ class ArduinoInterface(Node):
     def __init__(self, ser):
         super().__init__('arduino_interface_node')
         
+        self.uuv_name = self.declare_parameter('uuv_name', 'uuv').get_parameter_value().string_value        
 
         self.port = SerialAnalog(ser)
+        bno_status = self.port.readMsg()
+        if bno_status == '0':
+            self.get_logger().info('BNO055 not detected')
+        
+        
         self.turbo = False
         # Right, Left, Back, Front
         self.motorNums = [0,0,0,0]
         
-
-        
         self.subscription = self.create_subscription(Joy, '/joy', self.sub_callback, 10)
+        self.pose_publisher = self.create_publisher(Pose, f'{self.uuv_name}/pose', 10)
     
     
     def sub_callback(self, msg: Joy):
@@ -88,10 +95,19 @@ class ArduinoInterface(Node):
             self.motorNums[3] = -frontBackValue
         
         
-        #sent, returned = self.port.writeMsg(self.motorNums)
         self.port.writeMsg(self.motorNums)
+        uuvPose = self.port.readMsg().split(',')
         
-        #self.get_logger().info(returned.decode())
+        pose = Pose()
+        pose.x = 0.0
+        pose.y = 0.0
+        pose.z = 0.0
+        pose.x_quat = float(uuvPose[3])
+        pose.y_quat = float(uuvPose[4])
+        pose.z_quat = float(uuvPose[5])
+        pose.w_quat = float(uuvPose[6])
+        self.pose_publisher.publish(pose)
+        
         
 
 def main(args=None):

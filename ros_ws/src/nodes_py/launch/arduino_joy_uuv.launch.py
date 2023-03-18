@@ -6,7 +6,10 @@ def generate_launch_description():
         Node(
             package='nodes_py',
             executable='arduino_interface',
-            name="arduino_interface"
+            name="arduino_interface",
+            parameters=[
+                {'uuv_name': 'uuv1'}
+            ]
         ),
         Node(
             package="joy_linux",

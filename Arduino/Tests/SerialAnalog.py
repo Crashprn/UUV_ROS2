@@ -28,10 +28,17 @@ class SerialAnalog:
 
 
 def main(args = None):
-    portPath = os.path.join('/dev', 'ttyACM0')
-    serialObj = SerialAnalog(Serial(portPath))
+    portPath = os.path.join("/dev", 'ttyACM0')
+        
+    ser = Serial(portPath)
+    ser.baudrate = 115200
+    ser.timeout = 0.1
+    # Reset Arduino
+    ser.setDTR(False)
+    time.sleep(0.022)
+    ser.setDTR(True)
     
-    time.sleep(4)
+    serialObj = SerialAnalog(ser)
     
     while True:
         pinValues = input("Enter space seperated values from 0 to 255: ")
@@ -45,10 +52,16 @@ def main(args = None):
         time.sleep(0.001)                       
 
 def main2():
-    portPath = os.path.join('/dev', 'ttyACM0')
-    serialObj = SerialAnalog(Serial(portPath))
     
-    time.sleep(4)
+    portPath = os.path.join("/dev", 'ttyACM0')
+        
+    ser = Serial(portPath)
+    ser.baudrate = 115200
+    ser.timeout = 0.1
+    # Reset Arduino
+    ser.setDTR(False)
+    time.sleep(0.022)
+    ser.setDTR(True)
     
     stepSize = 5
     pins = 4

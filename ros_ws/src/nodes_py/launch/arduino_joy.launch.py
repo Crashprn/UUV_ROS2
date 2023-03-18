@@ -6,14 +6,19 @@ def generate_launch_description():
         Node(
             package='nodes_py',
             executable='arduino_interface',
-            name="arduino_interface"
+            name="arduino_interface",
+            parameters=[
+                {'uuv_name': 'uuv1'}
+            ]
         ),
         Node(
             package="joy",
             executable='joy_node',
             name="joy_node",
             parameters=[
-                {'default_trig_val': True}
+                {'default_trig_val': True,
+                 "autorepeat_rate": 60.0,
+                }
             ]
         )
     ])
