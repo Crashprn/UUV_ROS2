@@ -47,6 +47,17 @@ class ArduinoInterface(Node):
         
         self.subscription = self.create_subscription(Joy, '/joy', self.sub_callback, 10)
         self.pose_publisher = self.create_publisher(Pose, f'{self.uuv_name}/pose', 10)
+        
+        self.not_first_callback = False
+        self.last_callback_time = 0
+        
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        
+        self.v_x = 0.0
+        self.v_y = 0.0
+        self.v_z = 0.0
     
     
     def sub_callback(self, msg: Joy):
@@ -98,16 +109,33 @@ class ArduinoInterface(Node):
         self.port.writeMsg(self.motorNums)
         uuvPose = self.port.readMsg().split(',')
         
+        callback_time = self.get_clock().now().nanoseconds / 1e9
+        
+        if self.not_first_callback:
+            time_since_callback = callback_time - self.last_callback_time
+            self.get_logger().info(f'x: {uuvPose[0]}, y: {uuvPose[1]}, z: {uuvPose[2]}')
+            self.x += self.v_x* time_since_callback + 0.5 * float(uuvPose[0])*time_since_callback**2
+            self.y += self.v_y* time_since_callback + 0.5 * float(uuvPose[1])*time_since_callback**2
+            self.z += self.v_z* time_since_callback + 0.5 * float(uuvPose[2])*time_since_callback**2
+            
+            self.v_x += float(uuvPose[0])*time_since_callback
+            self.v_y += float(uuvPose[1])*time_since_callback
+            self.v_z += float(uuvPose[2])*time_since_callback
+
+        self.not_first_callback = True
+        self.last_callback_time = callback_time
+        
         pose = Pose()
-        pose.x = 0.0
-        pose.y = 0.0
-        pose.z = 0.0
+        pose.x = self.x
+        pose.y = self.y
+        pose.z = self.z
         pose.x_quat = float(uuvPose[3])
         pose.y_quat = float(uuvPose[4])
         pose.z_quat = float(uuvPose[5])
         pose.w_quat = float(uuvPose[6])
         self.pose_publisher.publish(pose)
         
+
         
 
 def main(args=None):
@@ -127,8 +155,7 @@ def main(args=None):
     node = ArduinoInterface(ser)
     
     try:
-        while rclpy.ok():
-            rclpy.spin_once(node)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     
