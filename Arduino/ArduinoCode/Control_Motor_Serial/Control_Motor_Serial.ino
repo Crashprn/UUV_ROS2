@@ -2,6 +2,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include <math.h>
 
 const uint8_t numberOfPins = 4;
 // 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
@@ -12,6 +13,15 @@ char receivedChars[numberOfPins * 2];
 long int newPinStates[numberOfPins];
 long int pinState[numberOfPins];
 int deadzone = 5;
+
+double offset_x = 0.0; 
+double offset_y = 0.0;
+double offset_z = 0.0;
+double old_x = 0.0;
+double old_y = 0.0;
+double old_z = 0.0;
+
+imu::Vector<3> acc;
 
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
@@ -33,10 +43,30 @@ void setup() {
   if (!bno.begin()) Serial.print("0;");
   else Serial.print("1;");
   bno.setExtCrystalUse(true);
+
+  confirmCycle();
+  
+  uint8_t system, gyro, accel, mag = 0;
+  while (system != 3 || gyro !=3 || accel != 3 || mag!=3)
+  {
+    bno.getCalibration(&system, &gyro, &accel, &mag);
+    
+    Serial.print("Sys=");
+    Serial.print(system, DEC);
+    Serial.print(" Gyro=");
+    Serial.print(gyro, DEC);
+    Serial.print(" Accel=");
+    Serial.print(accel, DEC);
+    Serial.print(" Mag=");
+    Serial.print(mag, DEC);
+    Serial.print(";");
+    confirmCycle();  
+  }
+  Serial.print("Calibrated;");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  unsigned long currTime = micros();
 
   if (Serial.available() >= numberOfPins * 2)
   {
@@ -108,4 +138,17 @@ void sendIMU(imu::Quaternion& quat, imu::Vector<3>& acc)
   Serial.print(acc.x(), 4); Serial.print(','); Serial.print(acc.y(), 4); Serial.print(','); Serial.print(acc.z(), 4); Serial.print(',');
   Serial.print(quat.x(), 4); Serial.print(','); Serial.print(quat.y(), 4); Serial.print(','); Serial.print(quat.z(), 4); Serial.print(','); Serial.print(quat.w(), 4);
   Serial.print(';');
+}
+
+void confirmCycle()
+{
+  char readyForCal;
+  while (true) {
+    if (Serial.available() > 0)
+    {
+      Serial.readBytes(&readyForCal, 1);
+      if (readyForCal == '1') break;
+    }
+    delay(100);
+  }  
 }

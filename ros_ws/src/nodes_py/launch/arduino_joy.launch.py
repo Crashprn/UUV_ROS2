@@ -17,7 +17,7 @@ def generate_launch_description():
             name="joy_node",
             parameters=[
                 {'default_trig_val': True,
-                 "autorepeat_rate": 60.0,
+                 "autorepeat_rate": 100.0,
                 }
             ]
         )
