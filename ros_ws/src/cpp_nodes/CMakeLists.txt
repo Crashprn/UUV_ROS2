@@ -12,6 +12,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(uuv_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(serial/include)
 set(serial_SRCS 
@@ -34,6 +36,16 @@ ament_target_dependencies(
   uuv_interfaces
   sensor_msgs
 )
+
+add_executable(uuv_broadcaster src/uuv_broadcaster.cpp)
+ament_target_dependencies(
+  uuv_broadcaster
+  rclcpp
+  uuv_interfaces
+  tf2_ros
+  geometry_msgs
+)
+
 target_link_libraries(arduino_interface serial)
 
 if(BUILD_TESTING)
@@ -53,5 +65,18 @@ install(
     arduino_interface
     DESTINATION lib/${PROJECT_NAME}
 )
+
+install(
+  TARGETS
+    uuv_broadcaster
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY rviz
+  DESTINATION share/${PROJECT_NAME})
 
 ament_package()

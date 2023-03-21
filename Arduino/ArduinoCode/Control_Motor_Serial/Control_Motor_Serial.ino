@@ -43,7 +43,7 @@ void setup() {
   if (!bno.begin()) Serial.print("0;");
   else Serial.print("1;");
   bno.setExtCrystalUse(true);
-
+  
   confirmCycle();
   
   uint8_t system, gyro, accel, mag = 0;
@@ -63,6 +63,7 @@ void setup() {
     confirmCycle();  
   }
   Serial.print("Calibrated;");
+  
 }
 
 void loop() {
@@ -128,15 +129,15 @@ void controlMotor(long int* motorValues)
     }
 
 
-    //Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.println(motorValue);
+    //Serial.print("Got message: "); Serial.print(pinState[i]); Serial.print(" : "); Serial.print(motorValue);
   }
-
+  //Serial.print(";");
 }
 
 void sendIMU(imu::Quaternion& quat, imu::Vector<3>& acc)
 {
-  Serial.print(acc.x(), 4); Serial.print(','); Serial.print(acc.y(), 4); Serial.print(','); Serial.print(acc.z(), 4); Serial.print(',');
-  Serial.print(quat.x(), 4); Serial.print(','); Serial.print(quat.y(), 4); Serial.print(','); Serial.print(quat.z(), 4); Serial.print(','); Serial.print(quat.w(), 4);
+  Serial.print(acc.x(), 4); Serial.print(' '); Serial.print(acc.y(), 4); Serial.print(' '); Serial.print(acc.z(), 4); Serial.print(' ');
+  Serial.print(quat.x(), 4); Serial.print(' '); Serial.print(quat.y(), 4); Serial.print(' '); Serial.print(quat.z(), 4); Serial.print(' '); Serial.print(quat.w(), 4);
   Serial.print(';');
 }
 
