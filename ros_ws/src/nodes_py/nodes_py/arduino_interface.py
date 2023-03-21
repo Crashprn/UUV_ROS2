@@ -129,7 +129,7 @@ class ArduinoInterface(Node):
         
         
         self.port.writeMotor(self.motorNums)
-        uuvPose = self.port.readMsg().split(',')
+        uuvPose = self.port.readMsg().split(' ')
         
         callback_time = self.get_clock().now().nanoseconds / 1e9
         

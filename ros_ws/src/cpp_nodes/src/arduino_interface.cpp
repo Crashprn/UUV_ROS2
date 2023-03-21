@@ -22,6 +22,9 @@ class ArduinoInterface : public rclcpp::Node
 
         m_ser = std::make_shared<serial::Serial>("/dev/ttyACM0", 115200, serial::Timeout::simpleTimeout(1000));
         if (!m_ser->isOpen()) RCLCPP_ERROR(this->get_logger(), "Serial port is not open");
+        m_ser->setDTR(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(22));
+        m_ser->setDTR(true);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
         std::string response = m_ser->read(2);
