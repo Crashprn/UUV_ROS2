@@ -39,9 +39,10 @@ indicates the command line.
 4. Run `$ sudo systemctl restart isc-dhcp-server`. This should cause the server to search for available devices and
    assign them addresses.
 5. Run `$ sudo systemctl status isc-dhcp-server` and see that the DHCP server is active.
-6. Run `$ dhcp-leases-list`. This should show `uuvcomputer` as a device with an IP lease.
+6. Run `$ dhcp-lease-list`. This should show `uuvcomputer` as a device with an IP lease.
 7. Run `$ ssh uuv@<IP address>`. You will now be controlling the onboard computer. Use `$ exit` to return to controlling
    the bay station computer.
 
 After completing this process once, you should be able to give the onboard computer an IP address and SSH into it using
 only steps 4-7 for future connections.
+OOB
