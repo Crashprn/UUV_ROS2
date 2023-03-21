@@ -45,8 +45,6 @@ class ArduinoInterface : public rclcpp::Node
             RCLCPP_INFO(this->get_logger(), "Calibration status: %s", calibration_status.c_str());
         }
 
-        RCLCPP_INFO(this->get_logger(), "Calibration complete");
-
         m_pub = this->create_publisher<uuv_interfaces::msg::Pose>(m_uuv_name + "/pose", 10);
         m_sub = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&ArduinoInterface::joy_callback, this, std::placeholders::_1));
     }
