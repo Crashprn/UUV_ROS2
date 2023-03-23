@@ -44,7 +44,7 @@ class ArduinoInterface : public rclcpp::Node
             }
             RCLCPP_INFO(this->get_logger(), "Calibration status: %s", calibration_status.c_str());
         }
-
+        m_prev_callback = this->get_clock()->now();
         m_pub = this->create_publisher<uuv_interfaces::msg::Pose>(m_uuv_name + "/pose", 10);
         m_sub = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&ArduinoInterface::joy_callback, this, std::placeholders::_1));
     }
@@ -117,6 +117,8 @@ class ArduinoInterface : public rclcpp::Node
         pose.z_quat = imuVals[5];
         pose.w_quat = imuVals[6];
         m_pub->publish(pose);
+        RCLCPP_INFO(this->get_logger(), "Call back time: %f", (this->get_clock()->now() - m_prev_callback).seconds());
+        m_prev_callback = this->get_clock()->now();
     }
 
     void writeMotorVals(std::vector<int>& motorValues)
@@ -149,6 +151,7 @@ class ArduinoInterface : public rclcpp::Node
         std::string m_uuv_name;
         bool m_turbo = false;
         std::vector<int> m_motor_values = {0, 0, 0, 0};
+        rclcpp::Time m_prev_callback;
 };
 
 int main(int argc, char * argv[])

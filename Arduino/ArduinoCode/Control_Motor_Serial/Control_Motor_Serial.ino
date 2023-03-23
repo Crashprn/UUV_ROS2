@@ -14,12 +14,6 @@ long int newPinStates[numberOfPins];
 long int pinState[numberOfPins];
 int deadzone = 5;
 
-double offset_x = 0.0; 
-double offset_y = 0.0;
-double offset_z = 0.0;
-double old_x = 0.0;
-double old_y = 0.0;
-double old_z = 0.0;
 
 imu::Vector<3> acc;
 
@@ -47,7 +41,7 @@ void setup() {
   confirmCycle();
   
   uint8_t system, gyro, accel, mag = 0;
-  while (system != 3 || gyro !=3 || accel != 3 || mag!=3)
+  while (system != 3 || gyro !=3 || accel !=3 || mag!=3)
   {
     bno.getCalibration(&system, &gyro, &accel, &mag);
     
