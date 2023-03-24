@@ -1,5 +1,5 @@
 # UUV Computer Setup
-This document explains how to set up the UUV computers. First, both the bay station and UUV computers must be connected 
+This document explains how to set up the UUV computers. First, both the bay station computer and UUV (onboard) computer must be connected 
 to power and connected to one another with an ethernet cord. To control the UUV, the controller must be plugged into the 
 bay station computer. For other control, a keyboard and monitor must be connected to the bay station computer. The software 
 may be set up manually or using a script. Both methods are described below.
@@ -72,7 +72,7 @@ computer, launches the `arduino_interface` node, and SSHes into the onboard comp
 twice, once for starting the DHCP server and once for SSHing into the onboard computer. If the script does not print out anything for the 
 UUV IP address, the script must be ran again.
 
-### `uuvSetup.sh'
+### `uuvSetup.sh`
 This script sets up the onboard computer. To run the script, run `$ ./uuvSetup.sh` from the home directory of the UUV computer after SSHing into it.
 
 This script prints out the IP address of the UUV computer, sources ROS on the UUV computer, and launches the `arduino_interface` node.
