@@ -13,7 +13,14 @@ class ArduinoInterface(Node):
     def __init__(self, ser : Serial):
         # Initializing Node
         super().__init__('arduino_interface_node') 
-        self.uuv_name = self.declare_parameter('uuv_name', 'uuv').get_parameter_value().string_value        
+        self.uuv_name = self.declare_parameter('uuv_name', 'uuv').get_parameter_value().string_value
+        
+        # Declaring proportional, integral, and derivative gains
+        self.declare_parameter('P_gain', 0.0)
+        self.declare_parameter('I_gain', 0.0)
+        self.declare_parameter('D_gain', 0.0)
+        
+        # Serial Port object 
         self.port= ser
         
         # Motor related variables
@@ -48,8 +55,13 @@ class ArduinoInterface(Node):
         self.pose_publisher = self.create_publisher(Pose, f'{self.uuv_name}/pose', 10)
     
     def sub_callback(self, msg: Joy):
-        # buttons: A, B, X, Y, Left Bumper, Right Bumper
+        P_gain = self.get_parameter('P_gain').get_parameter_value().double_value
+        I_gain = self.get_parameter('I_gain').get_parameter_value().double_value
+        D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
+        self.get_logger().info(f'P: {P_gain}, I: {I_gain}, D: {D_gain}')
+        
+        # buttons: A, B, X, Y, Left Bumper, Right Bumper
         aButton = msg.buttons[0]
         bumperLeft = msg.buttons[4]
         bumperRight = msg.buttons[5]
