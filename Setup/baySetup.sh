@@ -2,7 +2,7 @@
 
 # server setup
 echo "Starting DHCP server..."
-sudo systemctl start isc-dhcp-server
+sudo systemctl restart isc-dhcp-server
 echo -e "\nDHCP server status: $(sudo systemctl is-active isc-dhcp-server)"
 
 # obtain and print IP addresses
@@ -17,8 +17,8 @@ echo "Setting up bay station ROS workspace and starting arduino interface..."
 cd ros_ws
 colcon build
 . install/setup.bash
-# ros2 launch nodes_py arduino_joy.launch.py
-# ros2 launch nodes_py uuv_visualization.py
+ros2 launch nodes_py arduino_joy.launch.py
+ros2 launch nodes_py uuv_visualization.py
 cd ..
 
 # ssh into UUV computer
