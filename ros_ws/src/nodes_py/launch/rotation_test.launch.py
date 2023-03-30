@@ -5,10 +5,14 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='nodes_py',
-            executable='ArduinoInterface',
-            name="arduino_interface",
+            executable='RotationTester',
+            name="rotation_tester",
             parameters=[
-                {'uuv_name': 'uuv1'}
+                {'uuv_name': 'uuv1',
+                 'pwm_val': 1,
+                 'run_time': 5,
+                 }
             ]
         ),
+
     ])

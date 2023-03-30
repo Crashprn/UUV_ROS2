@@ -24,8 +24,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "arduino_interface = nodes_py.arduino_interface:main",
+            "ArduinoInterface = nodes_py.arduino_interface:main",
             "PoseBroadcaster = nodes_py.PoseBroadcaster:main",
+            "RotationTester = nodes_py.rotation_test:main",
         ],
     },
 )

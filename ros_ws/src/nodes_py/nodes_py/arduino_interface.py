@@ -161,11 +161,8 @@ def main(args=None):
     time.sleep(2) 
     node = ArduinoInterface(ser)
     
-    executor = rclpy.executors.MultiThreadedExecutor()
-    executor.add_node(node)
-    
     try:
-        executor.spin()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     
