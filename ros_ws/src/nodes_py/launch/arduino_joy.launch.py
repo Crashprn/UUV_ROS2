@@ -5,7 +5,7 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='nodes_py',
-            executable='arduino_interface',
+            executable='ArduinoInterface',
             name="arduino_interface",
             parameters=[
                 {'uuv_name': 'uuv1'}
