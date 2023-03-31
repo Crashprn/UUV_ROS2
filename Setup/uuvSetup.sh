@@ -6,7 +6,6 @@ echo "UUV IP address: $uuvIP"
 
 echo -e "\nSetting up UUV ROS workspace and starting arduino interface..."
 cd UUV_ROS2/ros_ws
-colcon build
+# colcon build
 . install/setup.bash
-ros2 launch nodes_py arduino_joy_uuv.launch.py
-ros2 launch nodes_py uuv_visualization.launch.py
+ros2 launch nodes_py arduino_joy.launch.py

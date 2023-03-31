@@ -15,10 +15,8 @@ echo -e "UUV IP address:         $uuvIP\n"
 # setup ROS on bay station computer
 echo "Setting up bay station ROS workspace and starting arduino interface..."
 cd ros_ws
-colcon build
+# colcon build
 . install/setup.bash
-ros2 launch nodes_py arduino_joy.launch.py
-ros2 launch nodes_py uuv_visualization.py
 cd ..
 
 # ssh into UUV computer

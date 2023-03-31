@@ -56,23 +56,27 @@ source ROS, navigate into the root of the ROS workspace, `ros_ws`, and run
 Then, you may launch a node from the root of the workspace by running
 `$ ros2 launch <package name> <launch file>`
 
-The launch file must be placed in `ros_ws/src/<node>/launch`. In this case, the node we want to launch is the `arduino_interface` node. To
+The launch file must be placed in `ros_ws/src/<node>/launch`. In this case, the node we want to launch is the `arduino_joy` node. To
 launch the node, from the root of the ROS workspace, run
-`$ ros2 launch nodes.py arduino_interface.launch.py`
+`$ ros2 launch nodes.py arduino_joy.launch.py`
 
 
 ## Setup Scripts
 Both the bay station computer and UUV computer have a script to perform their setup.
 
 ### `baySetup.sh`
-This script sets up the bay station computer. To run the script, run `$ ./baySetup.sh` from the home directory of the bay station computer.
+This script sets up the bay station computer. To run the script, run `$ Setup/baySetup.sh` from the home (`~`) directory of the bay station computer.
 
 The script assigns an IP address to the onboard computer, prints out the IP addresses of both computers, sources ROS on the bay station
-computer, launches the `arduino_interface` node, and SSHes into the onboard computer. The user will be prompted for the computer password
-twice, once for starting the DHCP server and once for SSHing into the onboard computer. If the script does not print out anything for the 
-UUV IP address, the script must be ran again.
+computer, and SSHes into the onboard computer. The user will be prompted for the computer password twice, once for starting the DHCP server and
+once for SSHing into the onboard computer. If the script does not print out anything for the UUV IP address, the script must be ran again.
 
 ### `uuvSetup.sh`
-This script sets up the onboard computer. To run the script, run `$ ./uuvSetup.sh` from the home directory of the UUV computer after SSHing into it.
+This script sets up the onboard computer. To run the script, run `$ Setup/uuvSetup.sh` from the home (`~`) directory of the UUV computer after SSHing into it.
 
-This script prints out the IP address of the UUV computer, sources ROS on the UUV computer, and launches the `arduino_interface` node.
+This script prints out the IP address of the UUV computer, sources ROS on the UUV computer, and launches the `arduino_joy` node.
+
+## Notes
+* All usernames and passwords for both computers are "uuv" without the quotation marks.
+* The setup scripts are assumed to be placed in a directory called `Setup` on each computer. However, they will function when placed in any directory,
+  as long as they are run from the directory containing `ros_ws`.
