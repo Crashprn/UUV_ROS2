@@ -59,7 +59,7 @@ class ArduinoInterface(Node):
         I_gain = self.get_parameter('I_gain').get_parameter_value().double_value
         D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
-        self.get_logger().info(f'P: {P_gain}, I: {I_gain}, D: {D_gain}')
+        #self.get_logger().info(f'P: {P_gain}, I: {I_gain}, D: {D_gain}')
         
         # buttons: A, B, X, Y, Left Bumper, Right Bumper
         aButton = msg.buttons[0]
