@@ -8,7 +8,9 @@ def generate_launch_description():
             executable='ArduinoInterface',
             name="arduino_interface",
             parameters=[
-                {'uuv_name': 'uuv1'}
+                {
+                    'uuv_name': 'uuv1',
+                 }
             ]
         ),
     ])
