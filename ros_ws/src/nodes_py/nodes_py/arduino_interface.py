@@ -74,7 +74,7 @@ class ArduinoInterface(Node):
             self.writeMotor(self.motorNums)
             uuvPose = self.readMsg().split(' ')
             roll, pitch , yaw = self.euler_from_quaternion(float(uuvPose[3]), float(uuvPose[4]), float(uuvPose[5]), float(uuvPose[6]))
-            self.prev_pitch = pitch
+            self.pitch = pitch
             self.first_callback = False
         else:    
             # buttons: A, B, X, Y, Left Bumper, Right Bumper
@@ -84,7 +84,7 @@ class ArduinoInterface(Node):
         
             if aButton == 1:
                 self.turbo = not self.turbo
-            scalar = 255 if self.turbo else 127
+            scalar = 126 if self.turbo else 64
         
             # axes: Left_x, Left_y, Left_trigger, Right_x, Right_y, Right_trigger
             xLeft = msg.axes[0]
@@ -122,16 +122,16 @@ class ArduinoInterface(Node):
                 
                 Deriv = D_gain * (error - self.prev_pitch_error) / (callback_time - self.last_callback_time)
                 
-                frontBackValue = self.saturation(int(Prop + Inte + Deriv), -100, 100)
+                frontBackValue = self.saturation(int(Prop + Inte + Deriv), -scalar, scalar)
                 
                 ## Old Calculating front and back motor values
                 #frontBackValue = int(yRight * scalar/2)
 
                 # Back motor
-                self.motorNums[2] = frontBackValue
+                self.motorNums[2] = -frontBackValue
         
                 # Front motor
-                self.motorNums[3] = -frontBackValue
+                self.motorNums[3] = frontBackValue
 
             self.prev_pitch_error = error
             
@@ -192,7 +192,7 @@ class ArduinoInterface(Node):
             t4 = +1.0 - 2.0 * (y * y + z * z)
             yaw_z = np.arctan2(t3, t4)
      
-            return roll_x, -pitch_y, yaw_z # in radians
+            return roll_x, pitch_y, yaw_z # in radians
     
     def trapezoid_integral(self, x, x_prev, dt):
         return (x + x_prev) * (dt) / 2
