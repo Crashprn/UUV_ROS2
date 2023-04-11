@@ -30,8 +30,13 @@ class ArduinoInterface(Node):
          
         
         # Sample time related variables
-        self.not_first_callback = False
+        self.first_callback = True
         self.last_callback_time = 0
+        
+        # Pitch PID control variables
+        self.pitch = 0.0
+        self.prev_pitch_error = 0.0
+        self.pitch_error_int = 0.0
         
         # Checking if BNO055 is connected
         bno_status = self.readMsg()
@@ -55,55 +60,81 @@ class ArduinoInterface(Node):
         self.pose_publisher = self.create_publisher(Pose, f'{self.uuv_name}/pose', 10)
     
     def sub_callback(self, msg: Joy):
+        callback_time = self.get_clock().now().nanoseconds /1e9
+        
         P_gain = self.get_parameter('P_gain').get_parameter_value().double_value
         I_gain = self.get_parameter('I_gain').get_parameter_value().double_value
         D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
-        #self.get_logger().info(f'P: {P_gain}, I: {I_gain}, D: {D_gain}')
+        self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}')
         
-        # buttons: A, B, X, Y, Left Bumper, Right Bumper
-        aButton = msg.buttons[0]
-        bumperLeft = msg.buttons[4]
-        bumperRight = msg.buttons[5]
+        if self.first_callback:
+            self.last_callback_time = callback_time
+            self.motorNums = [0,0,0,0]
+            self.writeMotor(self.motorNums)
+            uuvPose = self.readMsg().split(' ')
+            roll, pitch , yaw = self.euler_from_quaternion(float(uuvPose[3]), float(uuvPose[4]), float(uuvPose[5]), float(uuvPose[6]))
+            self.prev_pitch = pitch
+            self.first_callback = False
+        else:    
+            # buttons: A, B, X, Y, Left Bumper, Right Bumper
+            aButton = msg.buttons[0]
+            bumperLeft = msg.buttons[4]
+            bumperRight = msg.buttons[5]
         
-        if aButton == 1:
-            self.turbo = not self.turbo
-        scalar = 255 if self.turbo else 127
+            if aButton == 1:
+                self.turbo = not self.turbo
+            scalar = 255 if self.turbo else 127
         
-        # axes: Left_x, Left_y, Left_trigger, Right_x, Right_y, Right_trigger
-        xLeft = msg.axes[0]
-        yLeft = msg.axes[1]
-        yRight = msg.axes[4]
+            # axes: Left_x, Left_y, Left_trigger, Right_x, Right_y, Right_trigger
+            xLeft = msg.axes[0]
+            yLeft = msg.axes[1]
+            yRight = msg.axes[4] * np.pi * 3 / 8
         
-        # Normalizing trigger values between 0 and 1
-        trigLeft = (1 - msg.axes[2]) / 2
-        trigRight = (1 - msg.axes[5]) / 2
+            # Normalizing trigger values between 0 and 1
+            trigLeft = (1 - msg.axes[2]) / 2
+            trigRight = (1 - msg.axes[5]) / 2
         
-        # Calculating how much to reduce left or right motor output
-        leftScaler = abs(xLeft) if xLeft > 0 else 0
-        rightScaler = abs(xLeft) if xLeft < 0 else 0
+            # Calculating how much to reduce left or right motor output
+            leftScaler = abs(xLeft) if xLeft > 0 else 0
+            rightScaler = abs(xLeft) if xLeft < 0 else 0
         
-        direction = 1 if yLeft > 0 else -1
+            direction = 1 if yLeft > 0 else -1
         
-        #Right motor
-        rightMotor = int((yLeft * (1-rightScaler) - trigRight * direction) * scalar)
-        self.motorNums[0] = rightMotor
+            #Right motor
+            rightMotor = int((yLeft * (1-rightScaler) - trigRight * direction) * scalar)
+            self.motorNums[0] = rightMotor
 
-        # Left motor
-        leftMotor = int((yLeft *(1-leftScaler) - trigLeft* direction) *scalar)
-        self.motorNums[1] = leftMotor
+            # Left motor
+            leftMotor = int((yLeft *(1-leftScaler) - trigLeft* direction) *scalar)
+            self.motorNums[1] = leftMotor
 
-        if bumperLeft == 1 or bumperRight == 1:
-            self.motorNums[2] = self.motorNums[3] = -scalar if bumperLeft == 1 else scalar
-        else:
-            # Calculating front and back motor values
-            frontBackValue = int(yRight * scalar/2)
-            # Back motor
-            self.motorNums[2] = frontBackValue
+            error = yRight - self.pitch
+            self.pitch_error_int += self.trapezoid_integral(error, self.prev_pitch_error, callback_time - self.last_callback_time)
+            
+            
+            if bumperLeft == 1 or bumperRight == 1:
+                self.motorNums[2] = self.motorNums[3] = -scalar if bumperLeft == 1 else scalar
+            else:
+                Prop = P_gain * error
+                
+                Inte = I_gain * self.pitch_error_int
+                
+                Deriv = D_gain * (error - self.prev_pitch_error) / (callback_time - self.last_callback_time)
+                
+                frontBackValue = self.saturation(int(Prop + Inte + Deriv), -100, 100)
+                
+                ## Old Calculating front and back motor values
+                #frontBackValue = int(yRight * scalar/2)
+
+                # Back motor
+                self.motorNums[2] = frontBackValue
         
-            # Front motor
-            self.motorNums[3] = -frontBackValue
-        
+                # Front motor
+                self.motorNums[3] = -frontBackValue
+
+            self.prev_pitch_error = error
+            
         self.writeMotor(self.motorNums)
         uuvPose = self.readMsg().split(' ')
         
@@ -117,9 +148,10 @@ class ArduinoInterface(Node):
         pose.w_quat = float(uuvPose[6])
         self.pose_publisher.publish(pose)
         
-        callback_time = self.get_clock().now().nanoseconds / 1e9
+        roll, pitch, yaw = self.euler_from_quaternion(pose.x_quat, pose.y_quat, pose.z_quat, pose.w_quat)
         
-        self.last_callback_time = callback_time
+        self.pitch = pitch
+
     
     def writeMotor(self, nums):
         msg = []
@@ -140,9 +172,38 @@ class ArduinoInterface(Node):
         msg = self.port.read_until(b';')
         return msg.decode().strip(";")
         
-
-        
-
+    def euler_from_quaternion(self, x, y, z, w):
+            """
+            Convert a quaternion into euler angles (roll, pitch, yaw)
+            roll is rotation around x in radians (counterclockwise)
+            pitch is rotation around y in radians (counterclockwise)
+            yaw is rotation around z in radians (counterclockwise)
+            """
+            t0 = +2.0 * (w * x + y * z)
+            t1 = +1.0 - 2.0 * (x * x + y * y)
+            roll_x = np.arctan2(t0, t1)
+     
+            t2 = +2.0 * (w * y - z * x)
+            t2 = +1.0 if t2 > +1.0 else t2
+            t2 = -1.0 if t2 < -1.0 else t2
+            pitch_y = np.arcsin(t2)
+     
+            t3 = +2.0 * (w * z + x * y)
+            t4 = +1.0 - 2.0 * (y * y + z * z)
+            yaw_z = np.arctan2(t3, t4)
+     
+            return roll_x, -pitch_y, yaw_z # in radians
+    
+    def trapezoid_integral(self, x, x_prev, dt):
+        return (x + x_prev) * (dt) / 2
+    
+    def saturation(self, value, min, max):
+        if value > max:
+            return max
+        elif value < min:
+            return min
+        else:
+            return value
         
 
 def main(args=None):
