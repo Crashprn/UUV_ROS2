@@ -41,7 +41,7 @@ void setup() {
   confirmCycle();
   
   uint8_t system, gyro, accel, mag = 0;
-  while (system != 3 || gyro !=3 || accel !=3 || mag!=3)
+  while (system != 3 || gyro !=3 /* || accel !=3*/ || mag!=3)
   {
     bno.getCalibration(&system, &gyro, &accel, &mag);
     
