@@ -33,6 +33,11 @@ class ArduinoInterface(Node):
         self.first_callback = True
         self.last_callback_time = 0
         
+        # Data Collection arrays
+        self.desired_pitch = []
+        self.actual_pitch = []
+        self.number_of_samples = 0
+         
         # Pitch PID control variables
         self.pitch = 0.0
         self.prev_pitch_error = 0.0
@@ -58,6 +63,9 @@ class ArduinoInterface(Node):
         
         # Publishing pose topic
         self.pose_publisher = self.create_publisher(Pose, f'{self.uuv_name}/pose', 10)
+        
+        # Timer for saving data
+        save_timer = self.create_timer(4, self.save_data)
     
     def sub_callback(self, msg: Joy):
         callback_time = self.get_clock().now().nanoseconds /1e9
@@ -109,6 +117,8 @@ class ArduinoInterface(Node):
             leftMotor = int((yLeft *(1-leftScaler) - trigLeft* direction) *scalar)
             self.motorNums[1] = leftMotor
 
+            self.desired_pitch.append(yRight)
+            
             error = yRight - self.pitch
             self.pitch_error_int += self.trapezoid_integral(error, self.prev_pitch_error, callback_time - self.last_callback_time)
             
@@ -151,6 +161,23 @@ class ArduinoInterface(Node):
         roll, pitch, yaw = self.euler_from_quaternion(pose.x_quat, pose.y_quat, pose.z_quat, pose.w_quat)
         
         self.pitch = pitch
+        self.actual_pitch.append(self.pitch)
+        
+    def save_data(self):
+        if len(self.desired_pitch) >= 1000:
+            filename = f'rotation_test_pwm_{self.number_of_samples}.csv'        
+                
+            desired_pitch = np.array(self.desired_pitch.copy())
+            actual_pitch = np.array(self.actual_pitch.copy())
+            
+            self.desired_pitch = []
+            self.actual_pitch = []            
+
+            np.savetxt(filename, (desired_pitch,actual_pitch), delimiter=",", header="Desired, Actual", comments="")
+            
+            self.number_of_samples += 1
+        else:
+            return
 
     
     def writeMotor(self, nums):
