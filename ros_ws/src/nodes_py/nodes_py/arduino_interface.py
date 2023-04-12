@@ -164,7 +164,7 @@ class ArduinoInterface(Node):
         
     def save_data(self):
         if len(self.pitch_array) >= 1000:
-            filename = f'rotation_test_pwm_{self.number_of_samples}.csv'        
+            filename = f'pitch_test_data_{self.number_of_samples}.csv'        
                 
             pitch_array = np.array(self.pitch_array.copy())
             
