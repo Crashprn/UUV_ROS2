@@ -41,6 +41,7 @@ class ArduinoInterface(Node):
         self.pitch = 0.0
         self.prev_pitch_error = 0.0
         self.pitch_error_int = 0.0
+        self.prev_deriv = 0.0
         
         # Checking if BNO055 is connected
         bno_status = self.readMsg()
@@ -73,7 +74,7 @@ class ArduinoInterface(Node):
         I_gain = self.get_parameter('I_gain').get_parameter_value().double_value
         D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
-        self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}')
+        self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}, Prev Deriv: {self.prev_deriv:.4f}, Callback Time: {callback_time - self.last_callback_time:.4f}')
         
         if self.first_callback:
             self.last_callback_time = callback_time
@@ -120,7 +121,7 @@ class ArduinoInterface(Node):
             
             error = yRight - self.pitch
             self.pitch_error_int += self.trapezoid_integral(error, self.prev_pitch_error, callback_time - self.last_callback_time)
-            
+            self.prev_deriv = (error - self.prev_pitch_error) / (callback_time - self.last_callback_time)
             
             if bumperLeft == 1 or bumperRight == 1:
                 self.motorNums[2] = self.motorNums[3] = -scalar if bumperLeft == 1 else scalar
@@ -129,7 +130,7 @@ class ArduinoInterface(Node):
                 
                 Inte = I_gain * self.pitch_error_int
                 
-                Deriv = D_gain * (error - self.prev_pitch_error) / (callback_time - self.last_callback_time)
+                Deriv = D_gain * self.prev_deriv
                 
                 frontBackValue = self.saturation(int(Prop + Inte + Deriv), -scalar, scalar)
                 
@@ -160,6 +161,7 @@ class ArduinoInterface(Node):
         roll, pitch, yaw = self.euler_from_quaternion(pose.x_quat, pose.y_quat, pose.z_quat, pose.w_quat)
         
         self.pitch = pitch
+        self.last_callback_time = callback_time
         
         
     def save_data(self):
