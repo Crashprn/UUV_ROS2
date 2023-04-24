@@ -4,14 +4,20 @@
 #include <utility/imumaths.h>
 #include <math.h>
 
+// Defining number of pins
 const uint8_t numberOfPins = 4;
+
 // 1. PWM Pin, 2. IN1 pin, 3. IN2 pin
 // Right, Left, Back, Forward
 int pinSets[][3] = {{11, 13, 12}, {10, 9, 8}, {5,7,6}, {3, 4, 2}};
 
+// Array for holding motor messages
 char receivedChars[numberOfPins * 2];
+// Array for holding new motor values
 long int newPinStates[numberOfPins];
+/// Array for holding current motor values
 long int pinState[numberOfPins];
+// Deadzone for motor control
 int deadzone = 5;
 
 
@@ -20,7 +26,7 @@ imu::Vector<3> acc;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 void setup() {
-  // put your setup code here, to run once:
+  // Setting motor control pins to output
   for (auto &&pins : pinSets)
   {
     pinMode(pins[0], OUTPUT);
@@ -34,12 +40,14 @@ void setup() {
     pin = 0;
   }
 
+  // Checking if IMU is connected
   if (!bno.begin()) Serial.print("0;");
   else Serial.print("1;");
   bno.setExtCrystalUse(true);
   
   confirmCycle();
   
+  // Calibrating IMU
   uint8_t system, gyro, accel, mag = 0;
   while (system != 3 || gyro !=3 /* || accel !=3*/ || mag!=3)
   {
@@ -61,10 +69,10 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currTime = micros();
-
+  // Checking if motor data message is available
   if (Serial.available() >= numberOfPins * 2)
   {
+    // Receive motor data message
     receiveSerial(numberOfPins * 2);
     /*
     for (char num: receivedChars)
@@ -72,16 +80,19 @@ void loop() {
       Serial.print(static_cast<uint8_t>(num)); Serial.print(" , ");
     }
     */    
-    Serial.println();
+
+    // Setting motor values
     controlMotor(newPinStates);
+
+    // Getting IMU data and sending it back
     imu::Quaternion quat = bno.getQuat();
     imu::Vector<3> acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
-
     sendIMU(quat, acc);
   }
 
 }
 
+// Function for receiving motor data message
 void receiveSerial(int byteNumber)
 {
   auto length = Serial.readBytes(receivedChars, byteNumber);
@@ -96,6 +107,7 @@ void receiveSerial(int byteNumber)
   }
 }
 
+// Function for controlling motors
 void controlMotor(long int* motorValues)
 {
   for (auto i = 0; i < numberOfPins; i++)
@@ -127,7 +139,7 @@ void controlMotor(long int* motorValues)
   }
   //Serial.print(";");
 }
-
+// Function for sending IMU data 
 void sendIMU(imu::Quaternion& quat, imu::Vector<3>& acc)
 {
   Serial.print(acc.x(), 4); Serial.print(' '); Serial.print(acc.y(), 4); Serial.print(' '); Serial.print(acc.z(), 4); Serial.print(' ');
@@ -135,6 +147,7 @@ void sendIMU(imu::Quaternion& quat, imu::Vector<3>& acc)
   Serial.print(';');
 }
 
+// Function for waiting for the ROS node to be ready
 void confirmCycle()
 {
   char readyForCal;

@@ -68,14 +68,17 @@ class ArduinoInterface(Node):
         save_timer = self.create_timer(4, self.save_data)
     
     def sub_callback(self, msg: Joy):
+        # Determine current time
         callback_time = self.get_clock().now().nanoseconds /1e9
-        
+        # Retrieve PID gains
         P_gain = self.get_parameter('P_gain').get_parameter_value().double_value
         I_gain = self.get_parameter('I_gain').get_parameter_value().double_value
         D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
+        # Display Pertinent Data
         self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}, Prev Deriv: {self.prev_deriv:.4f}, Callback Time: {callback_time - self.last_callback_time:.4f}')
         
+        # If first callback, initialize variables
         if self.first_callback:
             self.last_callback_time = callback_time
             self.motorNums = [0,0,0,0]
@@ -117,14 +120,19 @@ class ArduinoInterface(Node):
             leftMotor = int((yLeft *(1-leftScaler) - trigLeft* direction) *scalar)
             self.motorNums[1] = leftMotor
 
+            # Store desired pitch and actual pitch
             self.pitch_array.append([yRight, self.pitch])
             
+            # Calculate pitch error
             error = yRight - self.pitch
+            # Calculate integral and derivative of pitch error
             self.pitch_error_int += self.trapezoid_integral(error, self.prev_pitch_error, callback_time - self.last_callback_time)
             self.prev_deriv = (error - self.prev_pitch_error) / (callback_time - self.last_callback_time)
             
+            # If bumper is pressed, ignore user control
             if bumperLeft == 1 or bumperRight == 1:
                 self.motorNums[2] = self.motorNums[3] = -scalar if bumperLeft == 1 else scalar
+            # Else, use PID control
             else:
                 Prop = P_gain * error
                 
@@ -133,9 +141,6 @@ class ArduinoInterface(Node):
                 Deriv = D_gain * self.prev_deriv
                 
                 frontBackValue = self.saturation(int(Prop + Inte + Deriv), -scalar, scalar)
-                
-                ## Old Calculating front and back motor values
-                #frontBackValue = int(yRight * scalar/2)
 
                 # Back motor
                 self.motorNums[2] = -frontBackValue
@@ -144,10 +149,14 @@ class ArduinoInterface(Node):
                 self.motorNums[3] = frontBackValue
 
             self.prev_pitch_error = error
-            
+        
+        # Write motor values to Arduino
         self.writeMotor(self.motorNums)
+
+        # Read UUV pose from Arduino
         uuvPose = self.readMsg().split(' ')
         
+        # Publish UUV pose
         pose = Pose()
         pose.x = 0.0
         pose.y = 0.0
@@ -158,12 +167,15 @@ class ArduinoInterface(Node):
         pose.w_quat = float(uuvPose[6])
         self.pose_publisher.publish(pose)
         
+        # Calculate roll pitch and yaw
         roll, pitch, yaw = self.euler_from_quaternion(pose.x_quat, pose.y_quat, pose.z_quat, pose.w_quat)
         
+        # Store current pitch and time for next callback
         self.pitch = pitch
         self.last_callback_time = callback_time
         
-        
+    
+    '''Callback function for saving data to csv file'''
     def save_data(self):
         if len(self.pitch_array) >= 1000:
             filename = f'pitch_test_data_{self.number_of_samples}.csv'        
@@ -178,7 +190,7 @@ class ArduinoInterface(Node):
         else:
             return
 
-    
+    '''Method for encoding motor values into bytes and writing to Arduino'''
     def writeMotor(self, nums):
         msg = []
         for num in nums:
@@ -191,13 +203,16 @@ class ArduinoInterface(Node):
         
         self.port.write(bytes(msg))
 
+    '''Method for writing multipurpose messages to Arduino'''
     def writeMsg(self, msg):
         self.port.write(bytes(msg.encode()))
-            
+
+    '''Method for reading multipurpose messages from Arduino'''  
     def readMsg(self):
         msg = self.port.read_until(b';')
         return msg.decode().strip(";")
-        
+    
+    '''Method for calculating euler angles from quaternions'''
     def euler_from_quaternion(self, x, y, z, w):
             """
             Convert a quaternion into euler angles (roll, pitch, yaw)
@@ -220,9 +235,11 @@ class ArduinoInterface(Node):
      
             return roll_x, pitch_y, yaw_z # in radians
     
+    '''Method for calculating integral using trapezoid rule'''
     def trapezoid_integral(self, x, x_prev, dt):
         return (x + x_prev) * (dt) / 2
     
+    '''Method for saturating values'''
     def saturation(self, value, min, max):
         if value > max:
             return max
