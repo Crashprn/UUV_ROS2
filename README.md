@@ -32,7 +32,18 @@ Finally, the orientation, and acceleration of the of the UUV is read from the IM
 
 ### Receive Serial
 
+Receive serial is the way the Arduino receives and stores the motor messages from the ROS program. This function begins by reading 8 bytes from the serial buffer on the Arduino (8 bytes in a motor message). Then the bytes are read and decoded in pairs (motor values come in pairs) and stored in the new motor values array.
 
+### Control Motor
+
+This method is charged with sending the PWM and logical values for each motor to the motor controllers. There are 2 main things that happen during this function. The first is if the new motor value is the opposite sign of the previous. If this happens the logical pins of the motor controller (ENA#) are set to 0 to brake the motor. If this isnt the case then the pins are set according the the sign of the motor value in the Motor_Driver_Document.
+
+### Send IMU
+This function sends the IMU acceleration and orientation Quanternion back the the ROS program.
+
+### Confirm Cycle
+
+The purpose of this function is to allow the ROS program to trigger an event or make the Arduino wait before continuing. This is used especially in the calibration of the UUV.
 
 ## ROS2 Code:
 
