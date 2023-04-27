@@ -2,6 +2,20 @@
 
 This repository contains the code that controls the UUV. The code can be found in 3 sections:
 
+# Quick Run
+
+To run the code, the first thing you need is a monitor and computer to connect to the bay station computer. 
+- DHCP server is running on the bay station computer by running the baySetup.sh bash file.
+- Get the uuv computer ip address by typing (dhcp-lease-list)
+- ssh into the uuv computer using (ssh uuv@'IP Address')
+- Then source the UUV ros code installation (run ./install/setup.bash in the UUV_ROS2/ros_ws/ folder)
+- Run the arduino interface node (ros2 launch nodes_py arduino_interface.launch.py)
+- Plug in the game controller to the bay station computer switch to a seperate terminal (use F key to switch to another terminal)
+- Source the local ROS install (./install/setup.bash)
+- run a Joy node (ros2 run joy_linux joy_linux_node)
+- After this the IMU just needs calibration (move in figure 8 for magnetometer, hold still for gyro, level for status)
+- 
+
 ## Arduino Code:
 
 This code is how the Arduino communicates with the computer to decode information like motor PWM values and send back messages such as the UUV orientation. The Arduino IDE code that is on the current Uno is in the folder Control_Motor_Serial.
@@ -47,9 +61,9 @@ The purpose of this function is to allow the ROS program to trigger an event or 
 
 ## ROS2 Code:
 
-This code is contained within the ros_ws folder, and if you haven't already do the ROS2 tutorials found here: [Tutorials](https://docs.ros.org/en/humble/Tutorials.html)
+This code is contained within the ros_ws folder, and if you haven't already, do the ROS2 tutorials found here: [Tutorials](https://docs.ros.org/en/humble/Tutorials.html)
 
-Once you complete the tutorials, a lot of the process for how the code works will be a lot more clear. And because the tutorials are available online ROS2 specific things will not be explained in this documentation.
+Once you complete the tutorials, a lot of the process for how the code works will be a lot more clear. And because the tutorials are available online ROS2 specific things will not be explained in this documentation. The main code for the ROS program is found within the nodes_py python package.
 
 ## Hardware Implementation:
 
