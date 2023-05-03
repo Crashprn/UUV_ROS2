@@ -16,9 +16,13 @@ class ArduinoInterface(Node):
         self.uuv_name = self.declare_parameter('uuv_name', 'uuv').get_parameter_value().string_value
         
         # Declaring proportional, integral, and derivative gains
-        self.declare_parameter('P_gain', 150.0)
-        self.declare_parameter('I_gain', 190.0)
-        self.declare_parameter('D_gain', 20.0)
+        #self.declare_parameter('P_gain', 150.0)
+        #self.declare_parameter('I_gain', 190.0)
+        #self.declare_parameter('D_gain', 20.0)
+        
+        self.declare_parameter('P_gain', 0.0)
+        self.declare_parameter('I_gain', 0.0)
+        self.declare_parameter('D_gain', 0.0)
         
         # Serial Port object 
         self.port= ser
@@ -76,7 +80,7 @@ class ArduinoInterface(Node):
         D_gain = self.get_parameter('D_gain').get_parameter_value().double_value
         
         # Display Pertinent Data
-        self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}, Prev Deriv: {self.prev_deriv:.4f}, Callback Time: {callback_time - self.last_callback_time:.4f}')
+        #self.get_logger().info(f'Pitch: {self.pitch:.4f}, Prev Error: {self.prev_pitch_error:.4f}, Pitch Error Int: {self.pitch_error_int:.4f}, Prev Deriv: {self.prev_deriv:.4f}, Callback Time: {callback_time - self.last_callback_time:.4f}')
         
         # If first callback, initialize variables
         if self.first_callback:
