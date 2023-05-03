@@ -16,10 +16,11 @@ class ArduinoInterface(Node):
         self.uuv_name = self.declare_parameter('uuv_name', 'uuv').get_parameter_value().string_value
         
         # Declaring proportional, integral, and derivative gains
-        self.declare_parameter('P_gain', 150.0)
+        #self.declare_parameter('P_gain', 150.0)
         #self.declare_parameter('I_gain', 190.0)
         #self.declare_parameter('D_gain', 20.0)
         
+        self.declare_parameter('P_gain', 0.0)
         self.declare_parameter('I_gain', 0.0)
         self.declare_parameter('D_gain', 0.0)
         
